@@ -5,7 +5,9 @@ GITHUB_REPO="${GITHUB_REPO:?Set GITHUB_REPO}"
 DB_PASSWORD="${DB_PASSWORD:-docqa_password}"
 OLLAMA_MODEL_PULL="${OLLAMA_MODEL_PULL:-qwen2.5:72b-instruct-q4_K_S}"
 
-export PG_PATH=/workspace/pg
+# Postgres on container disk (volume's 0777 mode breaks Postgres init)
+export PG_PATH=/var/lib/postgresql/16/ragdoc
+# Everything else on the network volume
 export OLLAMA_MODELS=/workspace/ollama
 export HF_HOME=/workspace/hf-cache
 export APP_PATH=/workspace/ragdoc
@@ -15,7 +17,7 @@ mkdir -p "$OLLAMA_MODELS" "$HF_HOME" /workspace/logs
 PG_BIN=/usr/lib/postgresql/16/bin
 
 echo "==[1/7]== System packages"
-apt-get update -qq
+apt-get update -qq || true
 DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl ca-certificates gnupg lsb-release sudo tmux git unzip nano build-essential libpq-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-ara poppler-utils libmagic1 libgl1 libglib2.0-0 libsm6 libxext6 libxrender1
 
 echo "==[2/7]== PostgreSQL"
@@ -28,13 +30,11 @@ if ! command -v psql >/dev/null 2>&1; then
 fi
 
 if [ ! -s "$PG_PATH/PG_VERSION" ]; then
-    echo "  -> initializing Postgres cluster on FUSE volume"
+    echo "  -> initializing Postgres cluster on container disk"
     rm -rf "$PG_PATH"
     mkdir -p "$PG_PATH"
+    chown -R postgres:postgres "$PG_PATH"
     chmod 700 "$PG_PATH"
-    # FUSE volume blocks chown — postgres user can still read/write 0777 dir
-    # initdb refuses to run as root, so run it as postgres user.
-    # postgres user can read $PG_PATH because it's 0777, even though not owned.
     sudo -u postgres "$PG_BIN/initdb" -D "$PG_PATH" --auth=trust --username=docqa
     echo "host all all 127.0.0.1/32 trust" >> "$PG_PATH/pg_hba.conf"
     echo "listen_addresses = 'localhost'"  >> "$PG_PATH/postgresql.conf"
