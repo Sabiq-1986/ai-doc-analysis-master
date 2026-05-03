@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Q&A</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #212121; color: #ececec; }
+        .app { display: flex; height: 100vh; }
+        
+        .sidebar { width: 260px; background: #171717; display: flex; flex-direction: column; border-right: 1px solid #2f2f2f; }
+        .sidebar-header { padding: 12px; }
+        .new-chat-btn { width: 100%; padding: 12px 16px; background: #2f2f2f; border: 1px solid #3f3f3f; border-radius: 10px; color: #fff; font-size: 14px; cursor: pointer; margin-bottom: 8px; }
+        .new-chat-btn:hover { background: #3f3f3f; }
+        .test-btn { width: 100%; padding: 8px 12px; background: #065f46; border: 1px solid #047857; border-radius: 8px; color: #6ee7b7; font-size: 12px; cursor: pointer; }
+        .test-btn:hover { background: #047857; }
+        .chat-history { flex: 1; overflow-y: auto; padding: 8px; }
+        .history-label { font-size: 11px; font-weight: 600; color: #8e8e8e; padding: 12px 12px 8px; text-transform: uppercase; }
+        .chat-item { padding: 12px; border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+        .chat-item:hover, .chat-item.active { background: #2f2f2f; }
+        .chat-item-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chat-item-docs { font-size: 10px; color: #6b6b6b; background: #2a2a2a; padding: 2px 6px; border-radius: 4px; }
+        .chat-item-delete { opacity: 0; background: none; border: none; color: #8e8e8e; cursor: pointer; }
+        .chat-item:hover .chat-item-delete { opacity: 1; }
+        .sidebar-footer { padding: 16px; border-top: 1px solid #2f2f2f; font-size: 12px; color: #8e8e8e; }
+        
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; }
+        .welcome-logo { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; font-size: 40px; }
+        .welcome-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .welcome-subtitle { font-size: 16px; color: #8e8e8e; margin-bottom: 40px; }
+        .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 500px; }
+        .quick-action { background: #2f2f2f; border: 1px solid #3f3f3f; border-radius: 12px; padding: 20px; cursor: pointer; text-align: left; }
+        .quick-action:hover { background: #3f3f3f; }
+        .quick-action-icon { font-size: 28px; margin-bottom: 8px; }
+        .quick-action-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .quick-action-desc { font-size: 12px; color: #8e8e8e; }
+        
+        .chat-screen { flex: 1; display: none; flex-direction: column; height: 100%; overflow: hidden; }
+        .chat-screen.active { display: flex; }
+        .chat-header { padding: 16px 24px; border-bottom: 1px solid #2f2f2f; display: flex; align-items: center; justify-content: space-between; }
+        .chat-title { font-size: 16px; font-weight: 600; }
+        .chat-action-btn { background: #2f2f2f; border: 1px solid #3f3f3f; border-radius: 8px; padding: 8px 14px; color: #ececec; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .chat-action-btn:hover { background: #3f3f3f; }
+        .chat-action-btn .count { background: #6366f1; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+        
+        .messages-wrapper { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        .messages { flex: 1; overflow-y: auto; padding: 24px; }
+        .message { max-width: 800px; margin: 0 auto 24px; display: flex; gap: 16px; }
+        .message-avatar { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+        .message.user .message-avatar { background: #4f4f4f; }
+        .message.assistant .message-avatar { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .message-content { flex: 1; min-width: 0; }
+        .message-role { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .message-text { font-size: 15px; line-height: 1.7; color: #d1d1d1; }
+        .message-sources { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .source-tag { background: #2f2f2f; border: 1px solid #3f3f3f; padding: 6px 12px; border-radius: 6px; font-size: 12px; color: #8e8e8e; }
+        
+        .input-area { padding: 16px 24px 24px; }
+        .input-container { max-width: 800px; margin: 0 auto; background: #2f2f2f; border: 1px solid #3f3f3f; border-radius: 16px; }
+        .input-row { display: flex; align-items: flex-end; padding: 12px; gap: 12px; }
+        .upload-btn { background: none; border: none; color: #8e8e8e; cursor: pointer; padding: 8px; font-size: 20px; }
+        .upload-btn:hover { color: #ececec; }
+        #messageInput { flex: 1; background: transparent; border: none; color: #ececec; font-size: 15px; padding: 8px 0; resize: none; min-height: 24px; max-height: 200px; font-family: inherit; }
+        #messageInput:focus { outline: none; }
+        #messageInput::placeholder { color: #6b6b6b; }
+        .send-btn { background: #6366f1; border: none; color: white; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .send-btn:hover { background: #5558e8; }
+        .stop-btn { background: #ef4444; border: none; color: white; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 18px; }
+        .stop-btn.active { display: flex; }
+        
+        .right-panel { width: 300px; background: #171717; border-left: 1px solid #2f2f2f; display: none; flex-direction: column; }
+        .right-panel.active { display: flex; }
+        .panel-header { padding: 16px; border-bottom: 1px solid #2f2f2f; display: flex; justify-content: space-between; }
+        .panel-title { font-size: 14px; font-weight: 600; }
+        .panel-close { background: none; border: none; color: #8e8e8e; cursor: pointer; font-size: 18px; }
+        .panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .panel-upload-zone { border: 2px dashed #3f3f3f; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 16px; }
+        .panel-upload-zone:hover { border-color: #6366f1; }
+        .panel-section-title { font-size: 12px; font-weight: 600; color: #8e8e8e; text-transform: uppercase; margin-bottom: 12px; }
+        .doc-item-small { background: #2f2f2f; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .doc-item-small.in-chat { border-left: 3px solid #6366f1; }
+        .doc-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; }
+        .doc-icon.pdf { background: #ef4444; }
+        .doc-icon.xlsx { background: #22c55e; }
+        .doc-icon.docx { background: #3b82f6; }
+        .doc-info { flex: 1; min-width: 0; }
+        .doc-name { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .doc-meta { font-size: 10px; color: #8e8e8e; }
+        .doc-action-btn { background: none; border: none; color: #8e8e8e; cursor: pointer; padding: 4px; }
+        .empty-docs { text-align: center; padding: 24px; color: #6b6b6b; font-size: 13px; }
+        
+        .toast { position: fixed; bottom: 24px; right: 24px; background: #2f2f2f; border: 1px solid #3f3f3f; border-radius: 10px; padding: 14px 20px; font-size: 14px; z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid #22c55e; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.info { border-left: 4px solid #6366f1; }
+        
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="createNewChat()">✨ New Chat</button>
+                <button class="test-btn" onclick="testStreaming()">🧪 Test Streaming</button>
+            </div>
+            <div class="chat-history">
+                <div class="history-label">Chat History</div>
+                <div id="chatList"></div>
+            </div>
+            <div class="sidebar-footer">📄 <span id="totalDocs">0</span> documents</div>
+        </div>
+
+        <div class="main">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-logo">📚</div>
+                <h1 class="welcome-title">Document Q&A</h1>
+                <p class="welcome-subtitle">Upload documents and ask questions</p>
+                <div class="quick-actions">
+                    <div class="quick-action" onclick="createNewChat()">
+                        <div class="quick-action-icon">💬</div>
+                        <div class="quick-action-title">Start Chat</div>
+                        <div class="quick-action-desc">New conversation</div>
+                    </div>
+                    <div class="quick-action" onclick="createNewChat(); setTimeout(() => document.getElementById('fileInput').click(), 300)">
+                        <div class="quick-action-icon">📤</div>
+                        <div class="quick-action-title">Upload & Chat</div>
+                        <div class="quick-action-desc">Upload docs first</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-screen" id="chatScreen">
+                <div class="chat-header">
+                    <div class="chat-title" id="chatTitle">New Chat</div>
+                    <button class="chat-action-btn" onclick="toggleDocsPanel()">
+                        📎 Documents <span class="count" id="sessionDocCount">0</span>
+                    </button>
+                </div>
+
+                <div class="messages-wrapper">
+                    <div class="messages" id="messages"></div>
+                </div>
+
+                <div class="input-area">
+                    <div class="input-container">
+                        <div class="input-row">
+                            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📎</button>
+                            <textarea id="messageInput" placeholder="Ask about your documents..." rows="1" onkeydown="handleKey(event)"></textarea>
+                            <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+                            <button class="stop-btn" id="stopBtn" onclick="stopGeneration()">⬛</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel" id="rightPanel">
+            <div class="panel-header">
+                <span class="panel-title">📁 Documents</span>
+                <button class="panel-close" onclick="toggleDocsPanel()">✕</button>
+            </div>
+            <div class="panel-body">
+                <div class="panel-upload-zone" onclick="document.getElementById('fileInput').click()">📤 Click to upload</div>
+                <div class="panel-section-title">📌 In This Chat</div>
+                <div id="chatDocs"></div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.pptx">
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_URL = '/api/v1';
+        let currentSessionId = null;
+        let currentSessionDocIds = new Set();
+        let sessions = [];
+        let allDocuments = [];
+        let abortController = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+            loadAllDocuments();
+            document.getElementById('fileInput').onchange = handleUpload;
+        });
+
+        // ========== TEST STREAMING ==========
+        async function testStreaming() {
+            showToast('Testing streaming...', 'info');
+            
+            const messagesEl = document.getElementById('messages');
+            if (!document.getElementById('chatScreen').classList.contains('active')) {
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('chatScreen').classList.add('active');
+                document.getElementById('chatTitle').textContent = 'Stream Test';
+            }
+            
+            // Create test message div
+            const testDiv = document.createElement('div');
+            testDiv.className = 'message assistant';
+            testDiv.innerHTML = `
+                <div class="message-avatar">🧪</div>
+                <div class="message-content">
+                    <div class="message-role">Stream Test</div>
+                    <div class="message-text">Starting...</div>
+                </div>
+            `;
+            messagesEl.appendChild(testDiv);
+            const textEl = testDiv.querySelector('.message-text');
+            
+            let text = '';
+            
+            try {
+                const response = await fetch(`${API_URL}/test/stream`);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                console.log('Stream test started...');
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    console.log('Chunk received:', chunk);
+                    
+                    for (const line of chunk.split('\n')) {
+                        if (!line.startsWith('data: ')) continue;
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            if (data.type === 'token') {
+                                text += data.content;
+                                textEl.textContent = text;
+                            } else if (data.type === 'done') {
+                                textEl.textContent = '✅ Streaming works! ' + text;
+                            }
+                        } catch (e) {}
+                    }
+                }
+                
+                showToast('✅ Streaming works!', 'success');
+            } catch (e) {
+                textEl.textContent = '❌ Error: ' + e.message;
+                showToast('❌ Stream test failed', 'error');
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                const r = await fetch(`${API_URL}/chat/sessions`);
+                sessions = await r.json();
+                renderChatList();
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadAllDocuments() {
+            try {
+                const r = await fetch(`${API_URL}/documents`);
+                allDocuments = await r.json();
+                document.getElementById('totalDocs').textContent = allDocuments.length;
+                renderDocsPanel();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderChatList() {
+            const el = document.getElementById('chatList');
+            el.innerHTML = sessions.length === 0 
+                ? '<div style="padding:12px;color:#6b6b6b;">No chats yet</div>'
+                : sessions.map(s => `
+                    <div class="chat-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession('${s.id}')">
+                        <span class="chat-item-title">💬 ${s.title}</span>
+                        <span class="chat-item-docs">${(s.document_ids||[]).length}</span>
+                        <button class="chat-item-delete" onclick="event.stopPropagation();deleteSession('${s.id}')">🗑</button>
+                    </div>
+                `).join('');
+        }
+
+        function renderDocsPanel() {
+            const el = document.getElementById('chatDocs');
+            const docs = allDocuments.filter(d => currentSessionDocIds.has(d.id));
+            el.innerHTML = docs.length === 0 
+                ? '<div class="empty-docs">No documents attached</div>'
+                : docs.map(d => `
+                    <div class="doc-item-small in-chat">
+                        <div class="doc-icon ${d.file_type.replace('.','')}">${d.file_type.replace('.','').toUpperCase()}</div>
+                        <div class="doc-info">
+                            <div class="doc-name">${d.filename}</div>
+                            <div class="doc-meta">${d.chunk_count} chunks</div>
+                        </div>
+                        <button class="doc-action-btn" onclick="removeDoc('${d.id}')">➖</button>
+                    </div>
+                `).join('');
+            document.getElementById('sessionDocCount').textContent = currentSessionDocIds.size;
+        }
+
+        async function createNewChat() {
+            const r = await fetch(`${API_URL}/chat/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: 'New Chat', document_ids: [] })
+            });
+            const s = await r.json();
+            currentSessionId = s.id;
+            currentSessionDocIds = new Set();
+            await loadSessions();
+            showChatScreen(s);
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        async function loadSession(id) {
+            const r = await fetch(`${API_URL}/chat/sessions/${id}`);
+            const data = await r.json();
+            currentSessionId = id;
+            currentSessionDocIds = new Set(data.document_ids || []);
+            renderChatList();
+            showChatScreen(data);
+            renderMessages(data.messages);
+            renderDocsPanel();
+        }
+
+        async function deleteSession(id) {
+            if (!confirm('Delete?')) return;
+            await fetch(`${API_URL}/chat/sessions/${id}`, { method: 'DELETE' });
+            if (currentSessionId === id) {
+                currentSessionId = null;
+                document.getElementById('welcomeScreen').style.display = 'flex';
+                document.getElementById('chatScreen').classList.remove('active');
+            }
+            await loadSessions();
+        }
+
+        function showChatScreen(session) {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('chatScreen').classList.add('active');
+            document.getElementById('chatTitle').textContent = session.title;
+        }
+
+        function renderMessages(messages) {
+            const el = document.getElementById('messages');
+            el.innerHTML = (messages || []).map(m => createMessageHTML(m.role, m.content, m.sources)).join('');
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function createMessageHTML(role, content, sources = []) {
+            const isUser = role === 'user';
+            const srcList = (sources || []).map(s => typeof s === 'string' ? s : s.filename);
+            return `
+                <div class="message ${role}">
+                    <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                    <div class="message-content">
+                        <div class="message-role">${isUser ? 'You' : 'Assistant'}</div>
+                        <div class="message-text">${escapeHtml(content)}</div>
+                        ${srcList.length ? `<div class="message-sources">${srcList.map(s=>`<span class="source-tag">📄 ${s}</span>`).join('')}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        }
+
+        // ========== STREAMING SEND MESSAGE ==========
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            if (!currentSessionId) await createNewChat();
+
+            const messagesEl = document.getElementById('messages');
+            messagesEl.innerHTML += createMessageHTML('user', msg);
+            input.value = '';
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            document.getElementById('sendBtn').style.display = 'none';
+            document.getElementById('stopBtn').classList.add('active');
+
+            // Create assistant message element
+            const assistantDiv = document.createElement('div');
+            assistantDiv.className = 'message assistant';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            avatarDiv.textContent = '🤖';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const roleDiv = document.createElement('div');
+            roleDiv.className = 'message-role';
+            roleDiv.textContent = 'Assistant';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = 'Thinking...';
+            
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message-sources';
+            
+            contentDiv.appendChild(roleDiv);
+            contentDiv.appendChild(textDiv);
+            contentDiv.appendChild(sourcesDiv);
+            assistantDiv.appendChild(avatarDiv);
+            assistantDiv.appendChild(contentDiv);
+            messagesEl.appendChild(assistantDiv);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            let fullText = '';
+            abortController = new AbortController();
+
+            try {
+                console.log('Starting stream...');
+                const response = await fetch(`${API_URL}/chat/sessions/${currentSessionId}/messages/stream`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: msg }),
+                    signal: abortController.signal
+                });
+
+                console.log('Response received, status:', response.status);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let tokenCount = 0;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        console.log('Stream complete, total tokens:', tokenCount);
+                        break;
+                    }
+
+                    const chunk = decoder.decode(value);
+                    console.log('Raw chunk:', chunk.substring(0, 100));
+                    
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        
+                        try {
+                            const data = JSON.parse(line.substring(6));
+                            console.log('Parsed:', data.type, data.type === 'token' ? data.content : '');
+                            
+                            if (data.type === 'token') {
+                                fullText += data.content;
+                                textDiv.innerHTML = escapeHtml(fullText);
+                                tokenCount++;
+                                messagesEl.scrollTop = messagesEl.scrollHeight;
+                            } 
+                            else if (data.type === 'sources' && data.content) {
+                                sourcesDiv.innerHTML = data.content
+                                    .map(s => `<span class="source-tag">📄 ${s.filename}</span>`)
+                                    .join('');
+                            }
+                            else if (data.type === 'done' && data.content) {
+                                textDiv.innerHTML = escapeHtml(data.content);
+                            }
+                            else if (data.type === 'error') {
+                                textDiv.innerHTML = `<span style="color:#f87171;">Error: ${data.content}</span>`;
+                            }
+                        } catch (e) {
+                            console.log('Parse error for line:', line);
+                        }
+                    }
+                }
+
+            } catch (err) {
+                console.error('Stream error:', err);
+                if (err.name === 'AbortError') {
+                    textDiv.textContent = '⏹️ Stopped';
+                } else {
+                    textDiv.innerHTML = `<span style="color:#f87171;">Error: ${err.message}</span>`;
+                }
+            }
+
+            document.getElementById('sendBtn').style.display = 'flex';
+            document.getElementById('stopBtn').classList.remove('active');
+            abortController = null;
+            await loadSessions();
+        }
+
+        function stopGeneration() {
+            if (abortController) abortController.abort();
+            document.getElementById('sendBtn').style.display = 'flex';
+            document.getElementById('stopBtn').classList.remove('active');
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function handleUpload(e) {
+            if (!currentSessionId) await createNewChat();
+            
+            for (const file of e.target.files) {
+                showToast('Uploading ' + file.name + '...', 'info');
+                const form = new FormData();
+                form.append('file', file);
+                
+                try {
+                    const r = await fetch(`${API_URL}/documents/upload`, { method: 'POST', body: form });
+                    const doc = await r.json();
+                    currentSessionDocIds.add(doc.id);
+                    await updateSessionDocs();
+                    showToast('✓ ' + file.name, 'success');
+                } catch (err) {
+                    showToast('Failed: ' + file.name, 'error');
+                }
+            }
+            await loadAllDocuments();
+            e.target.value = '';
+        }
+
+        async function removeDoc(id) {
+            currentSessionDocIds.delete(id);
+            await updateSessionDocs();
+            renderDocsPanel();
+        }
+
+        async function updateSessionDocs() {
+            if (!currentSessionId) return;
+            await fetch(`${API_URL}/chat/sessions/${currentSessionId}/documents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Array.from(currentSessionDocIds))
+            });
+            renderDocsPanel();
+        }
+
+        function toggleDocsPanel() {
+            document.getElementById('rightPanel').classList.toggle('active');
+        }
+
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

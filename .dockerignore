@@ -1,0 +1,33 @@
+.git
+**/__pycache__
+*.pyc
+venv/
+.venv/
+*.egg-info/
+.vscode/
+.idea/
+**/*.tar
+test_passports/
+test_*.py
+demo_*.py
+*.log
+.claude/
+
+# HuggingFace models (volume-mounted at runtime)
+models/
+
+# Old OCR service (deprecated, kept for reference)
+tesseract_ocr_service/
+
+# Build artifacts
+app/packages/
+app/Dockerfile.base
+app/download_wheels.*
+app/*.tar
+app/*.bat
+app/*.sh
+app/.gitkeep
+wheels_windows/
+
+# Keep app/parsers/models/ (contains MRZ ONNX model)
+!app/parsers/models/

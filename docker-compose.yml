@@ -1,0 +1,47 @@
+# =============================================================================
+# docker-compose.yml - RagDoc (Standalone App with Local Tesseract OCR)
+# =============================================================================
+# External dependencies (must be running separately):
+#   - PostgreSQL with pgvector on pg18_default network (container: postgres-18)
+#   - Ollama on the host (for LLM chat and optional AI Vision)
+#
+# OCR is now handled locally within the app container (Tesseract eng+ara).
+# The separate tesseract-ocr service is no longer needed.
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ragdoc-app:latest
+    container_name: ragdoc-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Tesseract is installed in the container
+      - TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
+    volumes:
+      - ragdoc-uploads:/app/data/uploads
+      - ./models:/app/models:ro
+    networks:
+      - pg18_default
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+volumes:
+  ragdoc-uploads:
+    driver: local
+
+networks:
+  pg18_default:
+    external: true

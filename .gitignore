@@ -1,0 +1,108 @@
+# ============================================
+# RagDoc - Git Ignore File
+# ============================================
+
+# --------------------------------------------
+# Python
+# --------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+.eggs/
+
+# --------------------------------------------
+# Virtual Environments (all variations)
+# --------------------------------------------
+.venv/
+.venv_bkp/
+.venv*/
+venv/
+venv_bkp/
+venv*/
+ENV/
+env/
+
+# --------------------------------------------
+# Large Files (download separately)
+# --------------------------------------------
+# DPR Models (~850MB)
+models/
+
+# Python wheels for offline
+wheels/
+wheels_3.10/
+packages/
+app/packages/
+
+# Docker images
+*.tar
+docker-images/
+
+# --------------------------------------------
+# Data & Database
+# --------------------------------------------
+data/
+uploads/
+*.db
+*.sqlite
+chroma_db/
+
+# --------------------------------------------
+# Environment & Secrets
+# --------------------------------------------
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# --------------------------------------------
+# IDE & System
+# --------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --------------------------------------------
+# Logs
+# --------------------------------------------
+*.log
+logs/
+
+# --------------------------------------------
+# Backup & Copy Files (cleanup these later)
+# --------------------------------------------
+*\ copy.py
+*\ copy\ *.py
+*_copy.py
+*_copy_*.py
+*_bak.py
+*.bak
+*.tmp
+*.temp
+
+# --------------------------------------------
+# Misc Folders
+# --------------------------------------------
+ss/
+gitignore
+
+# --------------------------------------------
+# Tesseract OCR Service - Ignore
+# --------------------------------------------
+tesseract_ocr_service/packages/
+tesseract_ocr_service/*.tar
+tesseract_ocr_service/__pycache__/
+*.zip
+wheels_windows/

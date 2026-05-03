@@ -1,0 +1,55 @@
+# requirements.txt
+# LangChain RAG with Multilingual Embeddings
+# REQUIRES: Python 3.10, 3.11, or 3.12 (NOT 3.14!)
+
+# LangChain
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-text-splitters>=0.2.0
+langchain-huggingface>=0.0.3
+
+# HuggingFace
+transformers>=4.40.0
+tokenizers>=0.19.0
+sentence-transformers>=2.7.0
+
+# PyTorch (CPU version - smaller download)
+torch>=2.2.0
+# For GPU: pip install torch --index-url https://download.pytorch.org/whl/cu121
+
+# FastAPI
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Database
+sqlalchemy>=2.0.25
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+pgvector>=0.2.4
+
+# Document parsing
+python-multipart>=0.0.6
+pypdf>=4.0.0
+pdfplumber>=0.10.0
+python-docx>=1.1.0
+python-pptx>=0.6.21  # For PowerPoint support
+openpyxl>=3.1.2
+xlrd>=2.0.1  # For legacy .xls files
+olefile>=0.46  # For .doc and .ppt file support
+pandas>=2.0.0  # CSV statistics, JSON normalization
+lxml>=4.9.0  # XML parsing
+
+# Image processing & OCR
+Pillow>=10.0.0  # Image processing
+pytesseract>=0.3.10  # OCR - requires Tesseract installed (eng + ara)
+PyMuPDF>=1.23.0  # PDF to image conversion for OCR
+opencv-python-headless>=4.8.0  # Image preprocessing for OCR
+onnxruntime>=1.16.0  # MRZ segmentation model
+
+# Settings
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# HTTP (for Ollama LLM)
+requests>=2.31.0
+httpx>=0.25.0  # Async HTTP for Ollama Vision
